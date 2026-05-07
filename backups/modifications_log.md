@@ -24,3 +24,11 @@ Chaque entrée contient :
 | 2026-05-07 | index.js | backups/20260507_index_v2.js | Ajout d'un endpoint web '/qr' pour afficher le QR Code proprement sur une page HTML, facilitant le scan sur Render. |
 | 2026-05-07 | package.json | N/A | Ajout du champ 'engines' (Node 20.x) pour forcer une version stable sur Render et éviter les échecs de build v24. |
 | 2026-05-07 | handler.js | N/A | Correction de la détection FFmpeg pour supporter Linux (Render) au lieu de chercher uniquement un .exe Windows. |
+| 2026-05-07 | lib/mongo-auth.js | N/A | Suppression de la dépendance '@whiskeysockets/baileys-libsignal' qui était inutilisée et provoquait une erreur 'Module Not Found' sur Render. |
+| 2026-05-07 | handler.js & index.js | N/A | Mise en place de la persistance des réglages (préfixe, autorisations) dans MongoDB pour éviter de perdre les droits au redémarrage de Render. |
+| 2026-05-07 | index.js | N/A | Amélioration du message d'attente du QR Code sur l'interface web pour plus de clarté. |
+| 2026-05-07 | handler.js | N/A | [DEBUG] Désactivation temporaire de la sécurité AUTH pour tester la réponse du bot à tous les utilisateurs. |
+| 2026-05-07 | handler.js | N/A | [DEBUG] Amélioration de l'extraction de texte et ajout d'une commande 'test' sans préfixe pour diagnostiquer les problèmes de réception. |
+| 2026-05-07 | handler.js | N/A | [STABILISATION] Suppression de l'envoi de vidéos/images dans .on et .help pour éradiquer les crashs GLib et supprimer le délai d'exécution sur Render. |
+| 2026-05-07 | handler.js | N/A | [FIX] Optimisation des headers yt-dlp pour éviter les blocages YouTube et forçage du client Android pour une meilleure compatibilité Render. |
+| 2026-05-07 | index.js | N/A | [STABILISATION] Désactivation de la génération de miniatures (thumbnails) pour stopper les crashs GLib lors de l'envoi d'images/vidéos. |

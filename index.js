@@ -112,8 +112,10 @@ async function startBot() {
         version,
         logger: P({ level: 'silent' }),
         auth: state,
-        browser: ['Phantom-Bot', 'Chrome', '3.0.0'],
-        printQRInTerminal: false
+        browser: ['Phantom Bot', 'Safari', '1.0.0'],
+        printQRInTerminal: true,
+        generateHighQualityThumbnail: false, // Désactive la génération de miniatures (évite crash GLib)
+        syncFullHistory: false
     });
 
     sock.ev.on('connection.update', (update) => {

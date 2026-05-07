@@ -133,8 +133,10 @@ async function downloadYoutubeVideo(query) {
         noCheckCertificates: true,
         limitRate: '2M',
         extractorArgs: 'youtube:player_client=android,web',
-        addHeader: ['referer:youtube.com', 'user-agent:Mozilla/5.0'],
-        format: '18/best' // 18 = 360p mp4 avec audio/vidéo intégrés (pas besoin de ffmpeg)
+        addHeader: [
+            'User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        ],
+        format: '18/best'
     };
 
     await youtubedl(video.url, opts);
@@ -205,12 +207,15 @@ async function downloadYoutubeAudio(query) {
 
         try {
             await youtubedl(video.url, {
-                format: '18', // mp4 360p progressif — lisible Android sans ffmpeg
+                format: '18', // mp4 360p progressif
                 output: tmpFile,
                 noPlaylist: true,
                 noCheckCertificates: true,
-                limitRate: '2M', // Limite pour ne pas couper le WebSocket WhatsApp
-                addHeader: ['referer:youtube.com', 'user-agent:Mozilla/5.0']
+                limitRate: '2M',
+                extractorArgs: 'youtube:player_client=android,web',
+                addHeader: [
+                    'User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                ]
             });
 
             // Cherche le fichier téléchargé
@@ -264,20 +269,31 @@ const handler = async (sock, m) => {
             // Dépaqueter les wrappers courants
             if (m.ephemeralMessage) return extractBody(m.ephemeralMessage.message);
             if (m.viewOnceMessageV2) return extractBody(m.viewOnceMessageV2.message);
+            if (m.viewOnceMessageV2Extension) return extractBody(m.viewOnceMessageV2Extension.message);
             if (m.documentWithCaptionMessage) return extractBody(m.documentWithCaptionMessage.message);
+            if (m.templateMessage) return extractBody(m.templateMessage.hydratedFourRowTemplate || m.templateMessage.hydratedTemplate);
 
-            if (m.conversation) return m.conversation;
-            if (m.extendedTextMessage) return m.extendedTextMessage?.text || '';
-            if (m.imageMessage) return m.imageMessage?.caption || '';
-            if (m.videoMessage) return m.videoMessage?.caption || '';
-            if (m.audioMessage) return '';
-            if (m.buttonsResponseMessage) return m.buttonsResponseMessage?.selectedButtonId || '';
-            if (m.listResponseMessage) return m.listResponseMessage?.singleSelectReply?.selectedRowId || '';
-            return '';
+            const text = m.conversation || 
+                         m.extendedTextMessage?.text || 
+                         m.imageMessage?.caption || 
+                         m.videoMessage?.caption || 
+                         m.documentMessage?.caption || 
+                         m.buttonsResponseMessage?.selectedButtonId || 
+                         m.listResponseMessage?.singleSelectReply?.selectedRowId || 
+                         m.templateButtonReplyMessage?.selectedId ||
+                         '';
+            return text;
         }
 
         const body = extractBody(msg.message);
+        console.log(`💬 [DEBUG] Body détecté : "${body}" | Prefix : "${currentPrefix}"`);
+
         if (!body) return;
+
+        // TEST DE RÉPONSE DIRECTE SANS PRÉFIXE
+        if (body.toLowerCase() === 'test') {
+            return sock.sendMessage(from, { text: '👻 *FANTÔME ACTIF !* Je vous entends parfaitement.' });
+        }
 
         // ── Interception des messages en mode Groq Alive ──────────────────
         // Ce bloc doit être AVANT le filtre commandes
@@ -341,16 +357,6 @@ const handler = async (sock, m) => {
         }
         if (command === 'on') {
             botActive = true;
-            try {
-                const onAnimPath = path.join(__dirname, 'img', 'on_anim.mp4');
-                if (fs.existsSync(onAnimPath)) {
-                    return sock.sendMessage(from, {
-                        video: fs.readFileSync(onAnimPath),
-                        caption: '⚡ *I\'M GOING GHOST !* 👻\n_Phantom Bot surgit de l\'ombre !_',
-                        gifPlayback: true
-                    });
-                }
-            } catch (_) {}
             return sock.sendMessage(from, { text: '⚡ *I\'M GOING GHOST !* 👻\n_Phantom Bot surgit de l\'ombre !_' });
         }
         if (!botActive) return;
@@ -498,23 +504,7 @@ const handler = async (sock, m) => {
                     `『 👁️ _Préfixe : ${currentPrefix} | By Danny_ 』`,
                 ].join('\n');
 
-                const media = loadDanyMedia();
-                if (media) {
-                    if (media.isVideo || media.isGif) {
-                        await sock.sendMessage(from, { 
-                            video: media.buffer, 
-                            caption: menu,
-                            gifPlayback: media.isGif // Si c'est un .gif, on l'affiche en boucle muette
-                        });
-                    } else {
-                        await sock.sendMessage(from, { 
-                            image: media.buffer, 
-                            caption: menu 
-                        });
-                    }
-                } else {
-                    await sock.sendMessage(from, { text: menu });
-                }
+                await sock.sendMessage(from, { text: menu });
                 break;
             }
 
