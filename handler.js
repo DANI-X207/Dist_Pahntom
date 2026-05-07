@@ -6,9 +6,36 @@ const path = require('path');
 
 let botActive = true;
 let currentPrefix = '.'; // Préfixe par défaut
-// ── Système d'autorisation ─────────────────────────────────────────────────────
-// Numéros autorisés à exécuter des commandes (en dehors du propriétaire/bot)
 const authorizedNumbers = new Set();
+
+// ── PERSISTANCE DES PARAMÈTRES ──────────────────────────────────────────────
+let settingsCollection = null;
+
+async function saveSettings() {
+    if (!settingsCollection) return;
+    await settingsCollection.updateOne(
+        { _id: 'bot_settings' },
+        { 
+            $set: { 
+                prefix: currentPrefix, 
+                authorized: Array.from(authorizedNumbers) 
+            } 
+        },
+        { upsert: true }
+    );
+}
+
+async function loadSettings(collection) {
+    settingsCollection = collection;
+    const settings = await settingsCollection.findOne({ _id: 'bot_settings' });
+    if (settings) {
+        if (settings.prefix) currentPrefix = settings.prefix;
+        if (settings.authorized) {
+            settings.authorized.forEach(num => authorizedNumbers.add(num));
+        }
+        console.log(`📦 [SETTINGS] Paramètres chargés : Prefix="${currentPrefix}", Autorisés=${authorizedNumbers.size}`);
+    }
+}
 
 // Convertit un numéro brut (ex: +33612345678) en JID WhatsApp
 function toJid(rawNumber) {
@@ -220,7 +247,8 @@ async function downloadYoutubeAudio(query) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-module.exports = async (sock, m) => {
+// ── Exportation ─────────────────────────────────────────────────────────────
+const handler = async (sock, m) => {
     const msg = m.messages[0];
     const from = msg?.key?.remoteJid;
 
@@ -298,6 +326,7 @@ module.exports = async (sock, m) => {
             if (query.length > 3) return sock.sendMessage(from, { text: '⚠️ *Le préfixe est trop long !* (3 caractères max)' });
             
             currentPrefix = query.trim();
+            await saveSettings();
             return sock.sendMessage(from, { text: `✅ *Préfixe modifié avec succès !*\n_Le nouveau préfixe est :_ *${currentPrefix}*` });
         }
 
@@ -330,6 +359,7 @@ module.exports = async (sock, m) => {
                 // .auth clear - vide toute la liste
                 if (sub === 'clear') {
                     authorizedNumbers.clear();
+                    await saveSettings();
                     return sock.sendMessage(from, { text: '🚨 *Mise à jour spectrale !*\n_Tous les accès ont été réinitialisés. Seul le propriétaire peut utiliser le bot._' });
                 }
 
@@ -362,6 +392,7 @@ module.exports = async (sock, m) => {
                     });
 
                     authorizedNumbers.add(target);
+                    await saveSettings();
                     console.log(`✅ [AUTH here] Ajout JID : ${target}`);
                     return sock.sendMessage(from, {
                         text: [
@@ -404,6 +435,7 @@ module.exports = async (sock, m) => {
                     });
 
                     const existed = authorizedNumbers.delete(target);
+                    if (existed) await saveSettings();
                     const remaining = [...authorizedNumbers].join('\n') || '_Aucun_';
                     return sock.sendMessage(from, {
                         text: existed
@@ -865,3 +897,6 @@ module.exports = async (sock, m) => {
         } catch (_) { }
     }
 };
+
+handler.loadSettings = loadSettings;
+module.exports = handler;

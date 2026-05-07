@@ -26,8 +26,15 @@ app.get('/qr', async (req, res) => {
     if (!lastQR) {
         return res.send(`
             <html>
-                <head><style>body{background:#0a0a0a;color:#00ffcc;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;}</style></head>
-                <body><h1>Le bot est déjà connecté ou le QR Code n'est pas encore prêt.</h1></body>
+                <head><style>body{background:#0a0a0a;color:#00ffcc;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;}</style></head>
+                <body>
+                    <div>
+                        <h1>Génération du QR Code... 🌀</h1>
+                        <p>Si le bot est déjà connecté, ce message est normal.</p>
+                        <p>Sinon, attendez 10-15 secondes et actualisez la page.</p>
+                        <p style="color:#888; font-size: 14px;"><i>Vérifiez les logs Render si ce message persiste.</i></p>
+                    </div>
+                </body>
             </html>
         `);
     }
@@ -92,10 +99,12 @@ async function startBot() {
     }
 
     const collection = mongoose.connection.db.collection('session');
+    const settingsCollection = mongoose.connection.db.collection('settings');
     const { state, saveCreds, init } = useMongoDBAuthState(collection);
     
-    // Initialiser les crédentiels depuis la DB
+    // Initialiser les crédentiels et les réglages
     await init();
+    await handler.loadSettings(settingsCollection);
 
     const { version } = await fetchLatestBaileysVersion();
 
