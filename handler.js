@@ -314,12 +314,17 @@ const handler = async (sock, m) => {
         const rawSender = msg.key.fromMe ? myJid : (msg.key.participant || from);
         const senderJid = normalizeJid(rawSender);
         const normMyJid = normalizeJid(myJid);
-        console.log(`🔑 [AUTH] sender=${senderJid} | owner=${normMyJid} | list=${[...authorizedNumbers].join(',') || '(vide)'}`);
+        
+        console.log(`🔍 [DEBUG] Sender JID: ${senderJid} | My JID: ${normMyJid}`);
+
+        // TEMPORAIRE : Désactivation de la sécurité pour test
+        /*
         if (senderJid !== normMyJid && !authorizedNumbers.has(senderJid)) {
             return sock.sendMessage(from, {
                 text: '🚨 *Accès refusé !*\n_Tu n\'es pas autorisé à utiliser les commandes de Phantom Bot._'
             });
         }
+        */
 
         if (command === 'setprefix') {
             if (!query) return sock.sendMessage(from, { text: `⚠️ *Préfixe manquant !*\n_Exemple : ${currentPrefix}setprefix !_` });
