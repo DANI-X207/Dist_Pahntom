@@ -81,9 +81,9 @@ function extractMedia(quoted) {
     return null;
 }
 
-// ── Chemin vers ffmpeg local ─────────────────────────────────────────────────
-const FFMPEG_PATH = path.join(__dirname, 'ffmpeg.exe');
-const HAS_FFMPEG = fs.existsSync(FFMPEG_PATH);
+// ── Chemin vers ffmpeg (Windows ou Linux/Render) ─────────────────────────────
+const FFMPEG_PATH = process.platform === 'win32' ? path.join(__dirname, 'ffmpeg.exe') : 'ffmpeg';
+const HAS_FFMPEG = process.platform === 'win32' ? fs.existsSync(FFMPEG_PATH) : true; 
 
 // ── Télécharge la vidéo YouTube via yt-dlp ───────────────────────────────────
 async function downloadYoutubeVideo(query) {

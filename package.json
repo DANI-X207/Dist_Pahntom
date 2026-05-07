@@ -1,6 +1,9 @@
 {
   "name": "phantom-bot",
   "version": "2.0.0",
+  "engines": {
+    "node": "20.x"
+  },
   "description": "👻 Phantom Bot — WhatsApp Bot par Danny",
   "main": "index.js",
   "scripts": {
